@@ -45,7 +45,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, item, type
   const handlePayment = () => {
     setPaymentStatus('processing');
     
-    // Simulate Razorpay payment
+    // Simulate Razorpay payment with real-time processing
     setTimeout(() => {
       const booking = {
         customerName: formData.customerName,
@@ -58,13 +58,14 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, item, type
         guests: formData.guests,
         totalAmount: calculateTotal(),
         status: 'confirmed' as const,
+        paymentStatus: 'completed' as const,
         paymentId: 'pay_' + Date.now().toString(),
       };
       
       addBooking(booking);
       setPaymentStatus('success');
       setStep('success');
-    }, 2000);
+    }, 1500);
   };
 
   const handleClose = () => {

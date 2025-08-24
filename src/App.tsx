@@ -16,6 +16,11 @@ import AdminLayout from './components/admin/AdminLayout';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminRooms from './pages/admin/AdminRooms';
+import AdminHalls from './pages/admin/AdminHalls';
+import AdminBookings from './pages/admin/AdminBookings';
+import AdminReviews from './pages/admin/AdminReviews';
+import AdminPayments from './pages/admin/AdminPayments';
+import AdminSettings from './pages/admin/AdminSettings';
 
 function App() {
   return (
@@ -29,11 +34,11 @@ function App() {
               <Routes>
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="rooms" element={<AdminRooms />} />
-                <Route path="halls" element={<div className="p-6">Party Halls Management (Coming Soon)</div>} />
-                <Route path="bookings" element={<div className="p-6">Bookings Management (Coming Soon)</div>} />
-                <Route path="reviews" element={<div className="p-6">Reviews Management (Coming Soon)</div>} />
-                <Route path="payments" element={<div className="p-6">Payments Management (Coming Soon)</div>} />
-                <Route path="settings" element={<div className="p-6">Settings (Coming Soon)</div>} />
+                <Route path="halls" element={<AdminHalls />} />
+                <Route path="bookings" element={<AdminBookings />} />
+                <Route path="reviews" element={<AdminReviews />} />
+                <Route path="payments" element={<AdminPayments />} />
+                <Route path="settings" element={<AdminSettings />} />
                 <Route path="" element={<AdminDashboard />} />
               </Routes>
             </AdminLayout>

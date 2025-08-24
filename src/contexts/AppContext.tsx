@@ -11,6 +11,8 @@ export interface Room {
   images: string[];
   available: boolean;
   description: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PartyHall {
@@ -22,6 +24,8 @@ export interface PartyHall {
   images: string[];
   available: boolean;
   description: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Review {
@@ -32,6 +36,7 @@ export interface Review {
   image?: string;
   date: string;
   roomType?: string;
+  approved: boolean;
 }
 
 export interface Booking {
@@ -48,7 +53,20 @@ export interface Booking {
   totalAmount: number;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   paymentId?: string;
+  paymentStatus: 'pending' | 'completed' | 'failed' | 'refunded';
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface Payment {
+  id: string;
+  bookingId: string;
+  amount: number;
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  paymentMethod: 'razorpay' | 'cash' | 'card';
+  transactionId?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface User {
@@ -58,18 +76,57 @@ export interface User {
   role: 'admin';
 }
 
+export interface HotelSettings {
+  hotelName: string;
+  address: string;
+  phone: string;
+  email: string;
+  description: string;
+  checkInTime: string;
+  checkOutTime: string;
+  cancellationPolicy: string;
+  taxRate: number;
+}
+
 interface AppContextType {
   rooms: Room[];
   partyHalls: PartyHall[];
   reviews: Review[];
   bookings: Booking[];
+  payments: Payment[];
+  hotelSettings: HotelSettings;
   currentUser: User | null;
   isAuthenticated: boolean;
-  updateRoomPrice: (roomId: string, price: number) => void;
-  updateHallPrice: (hallId: string, price: number) => void;
-  addReview: (review: Omit<Review, 'id' | 'date'>) => void;
-  addBooking: (booking: Omit<Booking, 'id' | 'createdAt'>) => void;
-  updateBookingStatus: (bookingId: string, status: Booking['status']) => void;
+  
+  // Room management
+  addRoom: (room: Omit<Room, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateRoom: (roomId: string, updates: Partial<Room>) => void;
+  deleteRoom: (roomId: string) => void;
+  
+  // Hall management
+  addHall: (hall: Omit<PartyHall, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateHall: (hallId: string, updates: Partial<PartyHall>) => void;
+  deleteHall: (hallId: string) => void;
+  
+  // Review management
+  addReview: (review: Omit<Review, 'id' | 'date' | 'approved'>) => void;
+  updateReview: (reviewId: string, updates: Partial<Review>) => void;
+  deleteReview: (reviewId: string) => void;
+  approveReview: (reviewId: string) => void;
+  
+  // Booking management
+  addBooking: (booking: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateBooking: (bookingId: string, updates: Partial<Booking>) => void;
+  deleteBooking: (bookingId: string) => void;
+  
+  // Payment management
+  addPayment: (payment: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updatePayment: (paymentId: string, updates: Partial<Payment>) => void;
+  
+  // Settings management
+  updateHotelSettings: (settings: Partial<HotelSettings>) => void;
+  
+  // Auth
   login: (email: string, password: string) => boolean;
   logout: () => void;
   register: (email: string, password: string, name: string) => boolean;
@@ -77,7 +134,7 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Mock data
+// Initial data
 const initialRooms: Room[] = [
   {
     id: '1',
@@ -91,7 +148,9 @@ const initialRooms: Room[] = [
       'https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     available: true,
-    description: 'Luxurious AC suite with modern amenities and stunning city view.'
+    description: 'Luxurious AC suite with modern amenities and stunning city view.',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
   },
   {
     id: '2',
@@ -105,7 +164,9 @@ const initialRooms: Room[] = [
       'https://images.pexels.com/photos/6585759/pexels-photo-6585759.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     available: true,
-    description: 'Comfortable AC room perfect for business and leisure travelers.'
+    description: 'Comfortable AC room perfect for business and leisure travelers.',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
   },
   {
     id: '3',
@@ -119,21 +180,9 @@ const initialRooms: Room[] = [
       'https://images.pexels.com/photos/1329711/pexels-photo-1329711.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     available: true,
-    description: 'Budget-friendly room with essential amenities for comfortable stay.'
-  },
-  {
-    id: '4',
-    name: 'Family Non-AC Suite',
-    type: 'Non-AC',
-    price: 2200,
-    capacity: 4,
-    amenities: ['Free WiFi', 'Fan', 'TV', 'Extra Bed', 'Attached Bathroom'],
-    images: [
-      'https://images.pexels.com/photos/2291599/pexels-photo-2291599.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/1743229/pexels-photo-1743229.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    available: true,
-    description: 'Spacious suite ideal for families with comfortable bedding for four guests.'
+    description: 'Budget-friendly room with essential amenities for comfortable stay.',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
   }
 ];
 
@@ -149,7 +198,9 @@ const initialPartyHalls: PartyHall[] = [
       'https://images.pexels.com/photos/1395964/pexels-photo-1395964.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     available: true,
-    description: 'Elegant ballroom perfect for weddings, conferences, and grand celebrations.'
+    description: 'Elegant ballroom perfect for weddings, conferences, and grand celebrations.',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
   },
   {
     id: '2',
@@ -162,20 +213,9 @@ const initialPartyHalls: PartyHall[] = [
       'https://images.pexels.com/photos/1024248/pexels-photo-1024248.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     available: true,
-    description: 'Mid-size hall ideal for corporate events, birthday parties, and family gatherings.'
-  },
-  {
-    id: '3',
-    name: 'Garden Pavilion',
-    capacity: 150,
-    price: 18000,
-    amenities: ['Open Air', 'Sound System', 'Garden Setting', 'Lighting', 'Catering Service'],
-    images: [
-      'https://images.pexels.com/photos/2306281/pexels-photo-2306281.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/1205301/pexels-photo-1205301.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    available: true,
-    description: 'Beautiful outdoor pavilion surrounded by lush gardens, perfect for intimate celebrations.'
+    description: 'Mid-size hall ideal for corporate events, birthday parties, and family gatherings.',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
   }
 ];
 
@@ -187,7 +227,8 @@ const initialReviews: Review[] = [
     comment: 'Exceptional service and beautiful rooms! The AC suite was spotless and the staff was incredibly helpful.',
     image: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=400',
     date: '2024-01-15',
-    roomType: 'Deluxe AC Suite'
+    roomType: 'Deluxe AC Suite',
+    approved: true
   },
   {
     id: '2',
@@ -196,113 +237,235 @@ const initialReviews: Review[] = [
     comment: 'Great value for money. The party hall was perfect for our corporate event.',
     image: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=400',
     date: '2024-01-20',
-    roomType: 'Crystal Hall'
-  },
-  {
-    id: '3',
-    customerName: 'Emily Davis',
-    rating: 5,
-    comment: 'Our wedding at the Grand Ballroom was magical! Everything was perfectly arranged.',
-    image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400',
-    date: '2024-01-25',
-    roomType: 'Grand Ballroom'
-  },
-  {
-    id: '4',
-    customerName: 'David Wilson',
-    rating: 4,
-    comment: 'Clean, comfortable, and affordable. The non-AC room was perfect for our budget stay.',
-    date: '2024-02-01',
-    roomType: 'Economy Non-AC Room'
+    roomType: 'Crystal Hall',
+    approved: true
   }
 ];
 
+const initialHotelSettings: HotelSettings = {
+  hotelName: 'Hotel Infinity',
+  address: '123 Luxury Avenue, City Center, State 12345',
+  phone: '+1 (555) 123-4567',
+  email: 'info@hotelinfinity.com',
+  description: 'Experience luxury and comfort at Hotel Infinity. We provide exceptional hospitality with world-class amenities in the heart of the city.',
+  checkInTime: '15:00',
+  checkOutTime: '11:00',
+  cancellationPolicy: 'Free cancellation up to 24 hours before check-in. After that, one night charge applies.',
+  taxRate: 18
+};
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [rooms, setRooms] = useState<Room[]>(initialRooms);
-  const [partyHalls, setPartyHalls] = useState<PartyHall[]>(initialPartyHalls);
-  const [reviews, setReviews] = useState<Review[]>(initialReviews);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [rooms, setRooms] = useState<Room[]>(() => {
+    const saved = localStorage.getItem('hotel_rooms');
+    return saved ? JSON.parse(saved) : initialRooms;
+  });
+  
+  const [partyHalls, setPartyHalls] = useState<PartyHall[]>(() => {
+    const saved = localStorage.getItem('hotel_halls');
+    return saved ? JSON.parse(saved) : initialPartyHalls;
+  });
+  
+  const [reviews, setReviews] = useState<Review[]>(() => {
+    const saved = localStorage.getItem('hotel_reviews');
+    return saved ? JSON.parse(saved) : initialReviews;
+  });
+  
+  const [bookings, setBookings] = useState<Booking[]>(() => {
+    const saved = localStorage.getItem('hotel_bookings');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
+  const [payments, setPayments] = useState<Payment[]>(() => {
+    const saved = localStorage.getItem('hotel_payments');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
+  const [hotelSettings, setHotelSettings] = useState<HotelSettings>(() => {
+    const saved = localStorage.getItem('hotel_settings');
+    return saved ? JSON.parse(saved) : initialHotelSettings;
+  });
+  
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    localStorage.setItem('hotel_rooms', JSON.stringify(rooms));
+  }, [rooms]);
+
+  useEffect(() => {
+    localStorage.setItem('hotel_halls', JSON.stringify(partyHalls));
+  }, [partyHalls]);
+
+  useEffect(() => {
+    localStorage.setItem('hotel_reviews', JSON.stringify(reviews));
+  }, [reviews]);
+
+  useEffect(() => {
+    localStorage.setItem('hotel_bookings', JSON.stringify(bookings));
+  }, [bookings]);
+
+  useEffect(() => {
+    localStorage.setItem('hotel_payments', JSON.stringify(payments));
+  }, [payments]);
+
+  useEffect(() => {
+    localStorage.setItem('hotel_settings', JSON.stringify(hotelSettings));
+  }, [hotelSettings]);
+
+  // Room management
+  const addRoom = (roomData: Omit<Room, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newRoom: Room = {
+      ...roomData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setRooms(prev => [...prev, newRoom]);
+  };
+
+  const updateRoom = (roomId: string, updates: Partial<Room>) => {
+    setRooms(prev => prev.map(room => 
+      room.id === roomId 
+        ? { ...room, ...updates, updatedAt: new Date().toISOString() }
+        : room
+    ));
+  };
+
+  const deleteRoom = (roomId: string) => {
+    setRooms(prev => prev.filter(room => room.id !== roomId));
+    // Also cancel any pending bookings for this room
+    setBookings(prev => prev.map(booking => 
+      booking.roomId === roomId && booking.status === 'pending'
+        ? { ...booking, status: 'cancelled' as const, updatedAt: new Date().toISOString() }
+        : booking
+    ));
+  };
+
+  // Hall management
+  const addHall = (hallData: Omit<PartyHall, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newHall: PartyHall = {
+      ...hallData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setPartyHalls(prev => [...prev, newHall]);
+  };
+
+  const updateHall = (hallId: string, updates: Partial<PartyHall>) => {
+    setPartyHalls(prev => prev.map(hall => 
+      hall.id === hallId 
+        ? { ...hall, ...updates, updatedAt: new Date().toISOString() }
+        : hall
+    ));
+  };
+
+  const deleteHall = (hallId: string) => {
+    setPartyHalls(prev => prev.filter(hall => hall.id !== hallId));
+    // Also cancel any pending bookings for this hall
+    setBookings(prev => prev.map(booking => 
+      booking.hallId === hallId && booking.status === 'pending'
+        ? { ...booking, status: 'cancelled' as const, updatedAt: new Date().toISOString() }
+        : booking
+    ));
+  };
+
+  // Review management
+  const addReview = (reviewData: Omit<Review, 'id' | 'date' | 'approved'>) => {
+    const newReview: Review = {
+      ...reviewData,
+      id: Date.now().toString(),
+      date: new Date().toISOString().split('T')[0],
+      approved: false // Reviews need admin approval
+    };
+    setReviews(prev => [newReview, ...prev]);
+  };
+
+  const updateReview = (reviewId: string, updates: Partial<Review>) => {
+    setReviews(prev => prev.map(review => 
+      review.id === reviewId ? { ...review, ...updates } : review
+    ));
+  };
+
+  const deleteReview = (reviewId: string) => {
+    setReviews(prev => prev.filter(review => review.id !== reviewId));
+  };
+
+  const approveReview = (reviewId: string) => {
+    setReviews(prev => prev.map(review => 
+      review.id === reviewId ? { ...review, approved: true } : review
+    ));
+  };
+
+  // Booking management
+  const addBooking = (bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newBooking: Booking = {
+      ...bookingData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setBookings(prev => [newBooking, ...prev]);
+
+    // Create corresponding payment record
+    if (bookingData.paymentId) {
+      const newPayment: Payment = {
+        id: Date.now().toString() + '_payment',
+        bookingId: newBooking.id,
+        amount: bookingData.totalAmount,
+        status: bookingData.paymentStatus,
+        paymentMethod: 'razorpay',
+        transactionId: bookingData.paymentId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      setPayments(prev => [newPayment, ...prev]);
+    }
+  };
+
+  const updateBooking = (bookingId: string, updates: Partial<Booking>) => {
+    setBookings(prev => prev.map(booking => 
+      booking.id === bookingId 
+        ? { ...booking, ...updates, updatedAt: new Date().toISOString() }
+        : booking
+    ));
+  };
+
+  const deleteBooking = (bookingId: string) => {
+    setBookings(prev => prev.filter(booking => booking.id !== bookingId));
+    setPayments(prev => prev.filter(payment => payment.bookingId !== bookingId));
+  };
+
+  // Payment management
+  const addPayment = (paymentData: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newPayment: Payment = {
+      ...paymentData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setPayments(prev => [newPayment, ...prev]);
+  };
+
+  const updatePayment = (paymentId: string, updates: Partial<Payment>) => {
+    setPayments(prev => prev.map(payment => 
+      payment.id === paymentId 
+        ? { ...payment, ...updates, updatedAt: new Date().toISOString() }
+        : payment
+    ));
+  };
+
+  // Settings management
+  const updateHotelSettings = (settings: Partial<HotelSettings>) => {
+    setHotelSettings(prev => ({ ...prev, ...settings }));
+  };
 
   // Mock admin credentials
   const adminCredentials = {
     email: 'admin@hotelinfinity.com',
     password: 'admin123',
     name: 'Admin User'
-  };
-
-  useEffect(() => {
-    // Generate some mock bookings for demonstration
-    const mockBookings: Booking[] = [
-      {
-        id: '1',
-        customerName: 'John Doe',
-        email: 'john@example.com',
-        phone: '+1234567890',
-        checkIn: '2024-01-15',
-        checkOut: '2024-01-17',
-        roomId: '1',
-        type: 'room',
-        guests: 2,
-        totalAmount: 7000,
-        status: 'confirmed',
-        paymentId: 'pay_123456789',
-        createdAt: '2024-01-10T10:00:00Z'
-      },
-      {
-        id: '2',
-        customerName: 'Jane Smith',
-        email: 'jane@example.com',
-        phone: '+1234567891',
-        checkIn: '2024-01-20',
-        checkOut: '2024-01-20',
-        hallId: '1',
-        type: 'hall',
-        guests: 150,
-        totalAmount: 25000,
-        status: 'completed',
-        paymentId: 'pay_123456790',
-        createdAt: '2024-01-15T14:30:00Z'
-      }
-    ];
-    setBookings(mockBookings);
-  }, []);
-
-  const updateRoomPrice = (roomId: string, price: number) => {
-    setRooms(prev => prev.map(room => 
-      room.id === roomId ? { ...room, price } : room
-    ));
-  };
-
-  const updateHallPrice = (hallId: string, price: number) => {
-    setPartyHalls(prev => prev.map(hall => 
-      hall.id === hallId ? { ...hall, price } : hall
-    ));
-  };
-
-  const addReview = (reviewData: Omit<Review, 'id' | 'date'>) => {
-    const newReview: Review = {
-      ...reviewData,
-      id: Date.now().toString(),
-      date: new Date().toISOString().split('T')[0]
-    };
-    setReviews(prev => [newReview, ...prev]);
-  };
-
-  const addBooking = (bookingData: Omit<Booking, 'id' | 'createdAt'>) => {
-    const newBooking: Booking = {
-      ...bookingData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
-    };
-    setBookings(prev => [newBooking, ...prev]);
-  };
-
-  const updateBookingStatus = (bookingId: string, status: Booking['status']) => {
-    setBookings(prev => prev.map(booking => 
-      booking.id === bookingId ? { ...booking, status } : booking
-    ));
   };
 
   const login = (email: string, password: string): boolean => {
@@ -348,15 +511,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const value: AppContextType = {
     rooms,
     partyHalls,
-    reviews,
+    reviews: reviews.filter(r => r.approved), // Only show approved reviews on frontend
     bookings,
+    payments,
+    hotelSettings,
     currentUser,
     isAuthenticated,
-    updateRoomPrice,
-    updateHallPrice,
+    addRoom,
+    updateRoom,
+    deleteRoom,
+    addHall,
+    updateHall,
+    deleteHall,
     addReview,
+    updateReview,
+    deleteReview,
+    approveReview,
     addBooking,
-    updateBookingStatus,
+    updateBooking,
+    deleteBooking,
+    addPayment,
+    updatePayment,
+    updateHotelSettings,
     login,
     logout,
     register
@@ -375,4 +551,20 @@ export const useApp = () => {
     throw new Error('useApp must be used within an AppProvider');
   }
   return context;
+};
+
+// Admin-only hook that includes unapproved reviews
+export const useAdminApp = () => {
+  const context = useContext(AppContext);
+  if (context === undefined) {
+    throw new Error('useAdminApp must be used within an AppProvider');
+  }
+  
+  // Return all reviews for admin (including unapproved)
+  const adminContext = {
+    ...context,
+    reviews: JSON.parse(localStorage.getItem('hotel_reviews') || '[]')
+  };
+  
+  return adminContext;
 };
